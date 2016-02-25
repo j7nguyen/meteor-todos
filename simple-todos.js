@@ -4,7 +4,7 @@ if (Meteor.isClient) {
 
   Template.body.helpers({
     tasks: function () {
-      return Tasks.find({});
+      return Tasks.find({}, {sort: {createdAt: -1}});
     }
   });
 
@@ -15,7 +15,7 @@ if (Meteor.isClient) {
 
       // Get text from form
       var text = event.target.text.value;
-      
+
       // Insert a task into the collection
       Tasks.insert({
         text: text,
