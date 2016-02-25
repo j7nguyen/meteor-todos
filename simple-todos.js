@@ -7,6 +7,25 @@ if (Meteor.isClient) {
       return Tasks.find({});
     }
   });
+
+  Template.body.events({
+    "submit .new-task": function (event) {
+      // Prevent default
+      event.preventDefault();
+
+      // Get text from form
+      var text = event.target.text.value;
+      
+      // Insert a task into the collection
+      Tasks.insert({
+        text: text,
+        createdAt: new Date() // current time
+      });
+
+      // Reset form
+      event.target.text.value = "";
+    }
+  });
 }
 
 if (Meteor.isServer) {
