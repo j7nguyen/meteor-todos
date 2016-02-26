@@ -3,7 +3,14 @@ Tasks = new Mongo.Collection("tasks");
 if (Meteor.isServer) {
   // This code only runs on the server
   Meteor.publish("tasks", function () {
-    return Tasks.find();
+    return Tasks.find({
+      //$or returns tasks where any condition in the array is true
+      $or: [
+        // $ne is for not equals. So this returns anything that isn't private
+        { private: {$ne: true} },
+        { owner: this.userId }
+      ]
+    });
   });
 }
 
@@ -71,16 +78,12 @@ if (Meteor.isClient) {
   });
 }
 
-function checkUser () {
-  if (! Meteor.userId()) {
-    throw new Meteor.Error("not-authorized");
-  }
-}
-
 Meteor.methods({
   addTask: function (text) {
     // Make sure user is logged in before inserting a task
-    checkUser();
+    if (! Meteor.userId()) {
+      throw new Meteor.Error("You must be logged in to add a task");
+    }
 
     Tasks.insert({
       text: text,
@@ -90,14 +93,22 @@ Meteor.methods({
     });
   },
   deleteTask: function (taskId) {
-    // Require authorization
-    checkUser();
+    var task = Tasks.findOne(taskId);
+
+    if (task.owner !== Meteor.userId()) {
+      // If it's a private task, make sure only the owner can delete it
+      throw new Meteor.Error("only a task's owner can delete it");
+    }
 
     Tasks.remove(taskId);
   },
   setChecked: function (taskId, setChecked) {
-    // Require authorization
-    checkUser();
+    var task = Tasks.findOne(taskId);
+
+    if (task.private && task.owner !== Meteor.userId()) {
+      // If task is private, only its owner can check it off
+      throw new Meteor.Error("only a task's owner can check off a private task");
+    }
 
     Tasks.update(taskId, { $set: { checked: setChecked} });
   },
@@ -106,7 +117,7 @@ Meteor.methods({
 
     // Make sure only the task owner can make a task private
     if (task.owner !== Meteor.userId()) {
-      throw new Meteor.Error("not-authorized");
+      throw new Meteor.Error("Only a task's owner can set privacy");
     }
 
     Tasks.update(taskId, { $set: { private: setToPrivate } });
