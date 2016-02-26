@@ -53,12 +53,16 @@ if (Meteor.isClient) {
   });
 }
 
+function checkUser () {
+  if (! Meteor.userId()) {
+    throw new Meteor.Error("not-authorized");
+  }
+}
+
 Meteor.methods({
   addTask: function (text) {
     // Make sure user is logged in before inserting a task
-    if (! Meteor.userId()) {
-      throw new Meteor.Error("not-authorized");
-    }
+    checkUser();
 
     Tasks.insert({
       text: text,
@@ -68,9 +72,15 @@ Meteor.methods({
     });
   },
   deleteTask: function (taskId) {
+    // Require authorization
+    checkUser();
+
     Tasks.remove(taskId);
   },
   setChecked: function (taskId, setChecked) {
+    // Require authorization
+    checkUser();
+
     Tasks.update(taskId, { $set: { checked: setChecked} });
   }
 });
