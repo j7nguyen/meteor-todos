@@ -1,7 +1,16 @@
 Tasks = new Mongo.Collection("tasks");
 
-if (Meteor.isClient) {
+if (Meteor.isServer) {
+  // This code only runs on the server
+  Meteor.publish("tasks", function () {
+    return Tasks.find();
+  });
+}
 
+if (Meteor.isClient) {
+  // This code only runs on the client
+  Meteor.subscribe("tasks");
+  
   Template.body.helpers({
     tasks: function () {
       if (Session.get("hideCompleted")) {
@@ -84,9 +93,3 @@ Meteor.methods({
     Tasks.update(taskId, { $set: { checked: setChecked} });
   }
 });
-
-if (Meteor.isServer) {
-  Meteor.startup(function () {
-    // code to run on server at startup
-  });
-}
